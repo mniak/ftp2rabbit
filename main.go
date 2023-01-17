@@ -8,9 +8,12 @@ import (
 )
 
 func main() {
+	driver := lo.Must(NewDriver())
+	defer driver.Close()
+
 	serverOptions := &server.Options{
 		Name:   "Custom FTP Collector",
-		Driver: NewDriver(),
+		Driver: driver,
 		Port:   10021,
 		Auth:   NewFakeAuth(),
 		Perm:   server.NewSimplePerm("theuser", "thegroup"),

@@ -1,4 +1,4 @@
-module test
+module github.com/mniak/ftp-guloso
 
 go 1.19
 

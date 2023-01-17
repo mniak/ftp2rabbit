@@ -106,6 +106,5 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 		return 0, errors.WithMessage(err, "failed to publish a message")
 	}
 
-	fmt.Println
 	return 0, nil
 }

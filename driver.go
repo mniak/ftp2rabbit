@@ -87,7 +87,7 @@ func (drv *queueDriver) Rename(ftpContext *server.Context, from string, to strin
 	fmt.Println("Rename")
 	return nil
 }
-\
+
 func (drv *queueDriver) MakeDir(ftpContext *server.Context, path string) error {
 	fmt.Println("MakeDir")
 	return nil

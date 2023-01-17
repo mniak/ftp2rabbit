@@ -13,11 +13,49 @@ import (
 	"goftp.io/server/v2"
 )
 
-func NewDriver() server.Driver {
-	return &queueDriver{}
+func (drv *queueDriver) Close() {
+	if drv.connection != nil {
+		drv.connection.Close()
+	}
+	if drv.channel != nil {
+		drv.channel.Close()
+	}
 }
 
-type queueDriver struct{}
+func NewDriver() (result *queueDriver, err error) {
+	result = new(queueDriver)
+	result.connection, err = amqp.Dial("amqp://guest:guest@localhost:5672/")
+	if err != nil {
+		err = errors.WithMessage(err, "failed to connect to rabbit mq")
+		return
+	}
+
+	result.channel, err = result.connection.Channel()
+	if err != nil {
+		err = errors.WithMessage(err, "failed to open a channel")
+		return
+	}
+
+	result.queue, err = result.channel.QueueDeclare(
+		"ftp-integration", // name
+		false,             // durable
+		false,             // delete when unused
+		false,             // exclusive
+		false,             // no-wait
+		nil,               // arguments
+	)
+	if err != nil {
+		err = errors.WithMessage(err, "failed to declare a queue")
+		return
+	}
+	return
+}
+
+type queueDriver struct {
+	connection *amqp.Connection
+	channel    *amqp.Channel
+	queue      amqp.Queue
+}
 
 func (drv *queueDriver) Stat(ftpContext *server.Context, path string) (os.FileInfo, error) {
 	fmt.Println("Stat", ftpContext.Cmd, path)
@@ -49,7 +87,7 @@ func (drv *queueDriver) Rename(ftpContext *server.Context, from string, to strin
 	fmt.Println("Rename")
 	return nil
 }
-
+\
 func (drv *queueDriver) MakeDir(ftpContext *server.Context, path string) error {
 	fmt.Println("MakeDir")
 	return nil
@@ -68,35 +106,11 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 	}
 	fmt.Println("  ", string(fileData))
 
-	conn, err := amqp.Dial("amqp://guest:guest@localhost:5672/")
-	if err != nil {
-		return 0, errors.WithMessage(err, "failed to connect to rabbit mq")
-	}
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	if err != nil {
-		return 0, errors.WithMessage(err, "failed to open a channel")
-	}
-	defer ch.Close()
-
-	q, err := ch.QueueDeclare(
-		"ftp-integration", // name
-		false,             // durable
-		false,             // delete when unused
-		false,             // exclusive
-		false,             // no-wait
-		nil,               // arguments
-	)
-	if err != nil {
-		return 0, errors.WithMessage(err, "failed to declare a queue")
-	}
-
-	err = ch.PublishWithContext(context.Background(),
-		"",     // exchange
-		q.Name, // routing key
-		false,  // mandatory
-		false,  // immediate
+	err = drv.channel.PublishWithContext(context.Background(),
+		"",             // exchange
+		drv.queue.Name, // routing key
+		false,          // mandatory
+		false,          // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
 			Body:        []byte(fileData),

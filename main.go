@@ -2,14 +2,18 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"strings"
 
 	"github.com/samber/lo"
 	"github.com/spf13/viper"
 	"goftp.io/server/v2"
 )
 
-func main() {
-	viper.AutomaticEnv()
+var verbose bool
+
+func init() {
+	viper.SetDefault("Verbose", "false")
 
 	viper.SetDefault("RabbitMQ_Host", "localhost")
 	viper.SetDefault("RabbitMQ_Port", "5672")
@@ -19,6 +23,11 @@ func main() {
 	viper.SetDefault("FTP_Username", "ftp2rabbit")
 	viper.SetDefault("FTP_Password", "password")
 
+	viper.AutomaticEnv()
+	verbose = viper.GetBool("Verbose") || len(os.Args) > 1 && strings.EqualFold(os.Args[1], "--verbose")
+}
+
+func main() {
 	rabbitHost := viper.GetString("RabbitMQ_Host")
 	rabbitPort := viper.GetInt("RabbitMQ_Port")
 	rabbitUsername := viper.GetString("RabbitMQ_Username")
@@ -26,6 +35,16 @@ func main() {
 	listenPort := viper.GetInt("ListenPort")
 	ftpUsername := viper.GetString("FTP_Username")
 	ftpPassword := viper.GetString("FTP_Password")
+
+	if verbose {
+		fmt.Println("RabbitHost:", rabbitHost)
+		fmt.Println("RabbitPort:", rabbitPort)
+		fmt.Println("RabbitUsername:", rabbitUsername)
+		fmt.Println("RabbitPassword:", rabbitPassword)
+		fmt.Println("ListenPort:", listenPort)
+		fmt.Println("FtpUsername:", ftpUsername)
+		fmt.Println("FtpPassword:", ftpPassword)
+	}
 
 	driver := lo.Must(NewDriver(rabbitHost, rabbitPort, rabbitUsername, rabbitPassword))
 	defer driver.Close()

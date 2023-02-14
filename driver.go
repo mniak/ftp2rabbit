@@ -25,6 +25,9 @@ func (drv *queueDriver) Close() {
 func NewDriver(host string, port int, username, password string) (result *queueDriver, err error) {
 	result = new(queueDriver)
 	amqpURL := fmt.Sprintf("amqp://%s:%s@%s:%d/", username, password, host, port)
+	if verbose {
+		fmt.Println("AMQP URL:", amqpURL)
+	}
 	result.connection, err = amqp.Dial(amqpURL)
 	if err != nil {
 		err = errors.WithMessage(err, "failed to connect to rabbit mq")

@@ -22,9 +22,9 @@ func (drv *queueDriver) Close() {
 	}
 }
 
-func NewDriver() (result *queueDriver, err error) {
+func NewDriver(host string, port int, username, password string) (result *queueDriver, err error) {
 	result = new(queueDriver)
-	result.connection, err = amqp.Dial("amqp://guest:guest@localhost:5672/")
+	result.connection, err = amqp.Dial(fmt.Sprintf("amqp://%s:%s@%s:%d/", username, password, host, port))
 	if err != nil {
 		err = errors.WithMessage(err, "failed to connect to rabbit mq")
 		return

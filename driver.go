@@ -137,7 +137,7 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 		false,          // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(fileInfoBytes),
+			Body:        fileInfoBytes,
 		},
 	)
 	if err != nil {

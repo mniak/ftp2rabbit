@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"goftp.io/server/v2"
@@ -102,6 +104,11 @@ func (drv *queueDriver) GetFile(ftpContext *server.Context, path string, filepos
 	return 0, nil, nil
 }
 
+type FileInfo struct {
+	TraceID  string
+	Contents []byte
+}
+
 func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, fileReader io.Reader, _ int64) (int64, error) {
 	fmt.Println("PutFile")
 	fileData, err := ioutil.ReadAll(fileReader)
@@ -110,6 +117,19 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 	}
 	fmt.Println("  ", string(fileData))
 
+	traceID, err := uuid.Microsoft()
+	if err != nil {
+		return 0, err
+	}
+
+	fileInfo := FileInfo{
+		TraceID:  traceID,
+		Contents: fileData,
+	}
+	fileInfoBytes, err := json.Marshal(fileInfo)
+	if err != nil {
+		return 0, err
+	}
 	err = drv.channel.PublishWithContext(context.Background(),
 		"",             // exchange
 		drv.queue.Name, // routing key
@@ -117,7 +137,7 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 		false,          // immediate
 		amqp.Publishing{
 			ContentType: "text/plain",
-			Body:        []byte(fileData),
+			Body:        []byte(fileInfoBytes),
 		},
 	)
 	if err != nil {

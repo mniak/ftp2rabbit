@@ -105,19 +105,18 @@ func (drv *queueDriver) GetFile(ftpContext *server.Context, path string, filepos
 }
 
 type FileInfo struct {
-	TraceID  string
+	TraceID  uuid.UUID
 	Contents []byte
+	FileName string
 }
 
-func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, fileReader io.Reader, _ int64) (int64, error) {
+func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, fileReader io.Reader, t int64) (int64, error) {
 	fmt.Println("PutFile")
 	fileData, err := ioutil.ReadAll(fileReader)
 	if err != nil {
 		return 0, err
 	}
-	fmt.Println("  ", string(fileData))
-
-	traceID, err := uuid.Microsoft()
+	traceID, err := uuid.NewRandom()
 	if err != nil {
 		return 0, err
 	}
@@ -125,8 +124,10 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 	fileInfo := FileInfo{
 		TraceID:  traceID,
 		Contents: fileData,
+		FileName: dstPath,
 	}
 	fileInfoBytes, err := json.Marshal(fileInfo)
+
 	if err != nil {
 		return 0, err
 	}

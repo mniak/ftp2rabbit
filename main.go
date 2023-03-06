@@ -15,11 +15,11 @@ var verbose bool
 func init() {
 	viper.SetDefault("Verbose", "false")
 
-	viper.SetDefault("RabbitMQ_Host", "localhost")
+	viper.SetDefault("RabbitMQ_Host", "rabbitmq.portalbooking.svc.cluster.local")
 	viper.SetDefault("RabbitMQ_Port", "5672")
 	viper.SetDefault("RabbitMQ_Username", "guest")
 	viper.SetDefault("RabbitMQ_Password", "guest")
-	viper.SetDefault("ListenPort", "10021")
+	viper.SetDefault("ListenPort", "21")
 	viper.SetDefault("FTP_Username", "ftp2rabbit")
 	viper.SetDefault("FTP_Password", "password")
 

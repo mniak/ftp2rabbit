@@ -1,18 +1,14 @@
-FROM golang:1.20-alpine AS builder
+FROM golang:latest
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
 
-COPY *.go ./
+COPY . .
+env GOOS=linux GOARCH=amd64
 
-RUN go build -o ./ftp2rabbit
+RUN go build -o main .
 
-FROM scratch
-COPY --from=builder /app/ftp2rabbit /app/ftp2rabbit
-
-ENTRYPOINT ["/app/ftp2rabbit"]
-EXPOSE 10021
+CMD ["/app/main"]
 

@@ -22,6 +22,7 @@ func init() {
 	viper.SetDefault("ListenPort", "10021")
 	viper.SetDefault("FTP_Username", "ftp2rabbit")
 	viper.SetDefault("FTP_Password", "password")
+	viper.SetDefault("FTP_PassivePorts", "10000-10005")
 
 	viper.AutomaticEnv()
 	verbose = viper.GetBool("Verbose") || len(os.Args) > 1 && strings.EqualFold(os.Args[1], "--verbose")
@@ -35,6 +36,7 @@ func main() {
 	listenPort := viper.GetInt("ListenPort")
 	ftpUsername := viper.GetString("FTP_Username")
 	ftpPassword := viper.GetString("FTP_Password")
+	ftpPassivePorts := viper.GetString("FTP_PassivePorts")
 
 	if verbose {
 		fmt.Println("RabbitHost:", rabbitHost)
@@ -44,17 +46,19 @@ func main() {
 		fmt.Println("ListenPort:", listenPort)
 		fmt.Println("FtpUsername:", ftpUsername)
 		fmt.Println("FtpPassword:", ftpPassword)
+		fmt.Println("FtpPassivePorts:", ftpPassivePorts)
 	}
 
 	driver := lo.Must(NewDriver(rabbitHost, rabbitPort, rabbitUsername, rabbitPassword))
 	defer driver.Close()
 
 	serverOptions := &server.Options{
-		Name:   "FTP Server",
-		Driver: driver,
-		Port:   listenPort,
-		Auth:   NewFakeAuth(),
-		Perm:   server.NewSimplePerm(ftpUsername, ftpPassword),
+		Name:         "FTP Server",
+		Driver:       driver,
+		Port:         listenPort,
+		Auth:         NewFakeAuth(),
+		Perm:         server.NewSimplePerm(ftpUsername, ftpPassword),
+		PassivePorts: ftpPassivePorts,
 	}
 
 	ftpServer := lo.Must(server.NewServer(serverOptions))

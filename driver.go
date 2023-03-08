@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 
@@ -110,12 +109,13 @@ type FileInfo struct {
 	FileName string
 }
 
-func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, fileReader io.Reader, t int64) (int64, error) {
+func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, fileReader io.Reader, _ int64) (int64, error) {
 	fmt.Println("PutFile")
-	fileData, err := ioutil.ReadAll(fileReader)
+	fileData, err := io.ReadAll(fileReader)
 	if err != nil {
 		return 0, err
 	}
+
 	traceID, err := uuid.NewRandom()
 	if err != nil {
 		return 0, err
@@ -131,6 +131,11 @@ func (drv *queueDriver) PutFile(ftpContext *server.Context, dstPath string, file
 	if err != nil {
 		return 0, err
 	}
+
+	if verbose {
+		fmt.Println("  ", string(fileInfoBytes))
+	}
+
 	err = drv.channel.PublishWithContext(context.Background(),
 		"",             // exchange
 		drv.queue.Name, // routing key

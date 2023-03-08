@@ -1,0 +1,23 @@
+version: "3.9"
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: "rabbitmq:3"
+    ports:
+      - "5672:5672"
+  ftp:
+    container_name: ftp.go
+    image: signadesenvolvimento/ftp2rabbit:0.0.3
+    ports:
+      - "10021:10021"
+      - "10000-10020:10000-10020"
+    # command: --verbose
+    environment:
+      VERBOSE: true
+      RABBITMQ_HOST: rabbitmq.local
+      LISTENPORT: 10021
+      # FTP_PASSIVEPORTS: "10000-10020"
+    depends_on:
+      - rabbitmq
+    links:
+      - "rabbitmq:rabbitmq.local"
